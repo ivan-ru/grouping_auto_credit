@@ -17,46 +17,67 @@ type (
 
 	accountGroup struct {
 		DebitSourceAccount string    `json:"debit_source_account"`
+		AutoCreditDate     time.Time `json:"auto_credit_date"`
 		Account            []account `json:"account"`
 	}
 )
 
 const (
-	numberOfAccount            = 1000000
-	numberOfDebitSourceAccount = 1000
+	numberOfAccount            = 30
+	numberOfDebitSourceAccount = 10
 )
 
 var (
 	timeElapsed            time.Duration
 	timeElapsedSeconds     float64
 	timeElapsedNanoSeconds int64
-	dataToStore            = []accountGroup{}
+	maxJob                 = 10
 	accountListGrouped     = make(map[string][]account)
+	dataToStore            = []accountGroup{}
+	chunkedDataTemp        = [][]account{}
+	chunkedDataWrapper     = [][][]account{}
+	chunkedDataTempLength  int
+	loopCount              int
+	lastLoop               bool
 )
 
 func main() {
 	// get mock data of accounts sorted by account opening date
 	ungroupedAccountList := getData()
+	start := time.Now() // start time count to record process time after get mock data
 	for _, val := range ungroupedAccountList {
 		accountListGrouped[val.DebitSourceAccount] = append(accountListGrouped[val.DebitSourceAccount], val)
 	}
 
-	start := time.Now() // start time count to record process time after get mock data
 	for key, val := range accountListGrouped {
+		if loopCount == len(accountListGrouped)-1 {
+			lastLoop = true
+		}
 		newAccountGroup := accountGroup{
 			DebitSourceAccount: key,
+			AutoCreditDate:     time.Now(),
 			Account:            val,
 		}
-		dataToStore = append(dataToStore, newAccountGroup)
+		dataToStore = append(dataToStore, newAccountGroup) //data to store to db later as history
+
+		if len(val)+chunkedDataTempLength > maxJob || lastLoop {
+			if lastLoop {
+				chunkedDataTemp = append(chunkedDataTemp, val)
+			}
+			chunkedDataWrapper = append(chunkedDataWrapper, chunkedDataTemp)
+			chunkedDataTemp = nil
+			chunkedDataTempLength = 0
+		}
+
+		chunkedDataTemp = append(chunkedDataTemp, val) //chunked data to process auto credit
+		chunkedDataTempLength += len(val)
+		loopCount++
 	}
 	json.Marshal(dataToStore)
 	// dataToStoreByte, _ := json.Marshal(dataToStore)
 	// fmt.Println(string(dataToStoreByte))
 
-	timeElapsed = time.Since(start)
-	timeElapsedSeconds = timeElapsed.Seconds()
-	timeElapsedNanoSeconds = timeElapsed.Nanoseconds()
-	fmt.Printf("Total time elapsed for %d grouped data => %f seconds => %d nanoseconds\n", numberOfAccount, timeElapsedSeconds, timeElapsedNanoSeconds)
+	countProcessTime(start)
 
 	// // write result to file
 	// f, _ := os.Create("account_grouped.json")
@@ -67,6 +88,20 @@ func main() {
 
 	// w.Flush()
 
+	// a := 0
+	// b := 0
+	// for _, val := range chunkedDataWrapper {
+	// 	for _, z := range val {
+	// 		fmt.Println(len(z))
+	// 		a += len(z)
+	// 		b++
+	// 	}
+	// }
+	// fmt.Println(a / b)
+
+	fmt.Println("chunkedDataWrapper==========")
+	chunkedDataWrapperByte, _ := json.Marshal(chunkedDataWrapper)
+	fmt.Println(string(chunkedDataWrapperByte))
 }
 
 // getData() mock data from database
@@ -85,12 +120,23 @@ func getData() (accountList []account) {
 			AccountOpeningDate: time.Now().Local().Add(time.Second * time.Duration(i)).Format("2006-01-02 15:04:05"),
 		}
 		newAccount.DebitSourceAccount = strconv.Itoa(randInt(1, numberOfDebitSourceAccount))
+		// fmt.Print(" = ")
+		// fmt.Println(newAccount.DebitSourceAccount)
 		accountList = append(accountList, newAccount)
-		// fmt.Println(accountList[i])
 	}
 	return
 }
 
-func randInt(min int, max int) int {
-	return min + rand.Intn(max-min)
+func randInt(min int, max int) (randomNumber int) {
+	rand.Seed(time.Now().UnixNano())
+	randomNumber = min + rand.Intn(max-min)
+	// fmt.Print(randomNumber)
+	return
+}
+
+func countProcessTime(start time.Time) {
+	timeElapsed = time.Since(start)
+	timeElapsedSeconds = timeElapsed.Seconds()
+	timeElapsedNanoSeconds = timeElapsed.Nanoseconds()
+	fmt.Printf("Total time elapsed for %d grouped data => %f seconds => %d nanoseconds\n", numberOfAccount, timeElapsedSeconds, timeElapsedNanoSeconds)
 }

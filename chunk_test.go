@@ -9,8 +9,8 @@ import (
 )
 
 var (
-	testNumberOfAccounts            = 1000000
-	testNumberOfDebitSourceAccounts = 100000
+	testNumberOfAccounts            = 100
+	testNumberOfDebitSourceAccounts = 10
 )
 
 func Test_chunkList(t *testing.T) {

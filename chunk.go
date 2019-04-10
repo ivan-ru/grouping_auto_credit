@@ -35,7 +35,11 @@ func chunkList(ungroupedAccountList []account) (chunkedDataWrapper [][][]account
 		// fmt.Println((len(val) + chunkedDataTempPerDebitSourceAccountLength))
 		if ((len(val) + chunkedDataTempPerDebitSourceAccountLength) > maxJob) || lastLoop {
 			if lastLoop {
-				chunkedDataTempPerDebitSourceAccount = append(chunkedDataTempPerDebitSourceAccount, val)
+				if len(val)+len(chunkedDataTempPerDebitSourceAccount) < maxJob {
+					chunkedDataTempPerDebitSourceAccount = append(chunkedDataTempPerDebitSourceAccount, val)
+				} else {
+					chunkedDataTemp = append(chunkedDataTemp, [][]account{val})
+				}
 			}
 			if chunkedDataTempPerDebitSourceAccountLength == maxJob {
 				chunkedDataWrapper = append(chunkedDataWrapper, chunkedDataTempPerDebitSourceAccount)
@@ -44,7 +48,9 @@ func chunkList(ungroupedAccountList []account) (chunkedDataWrapper [][][]account
 			} else {
 				// fmt.Println("asdasdasd")
 				if len(chunkedDataTemp) == 0 || (len(val)+chunkedDataTempPerDebitSourceAccountLength) != maxJob {
-					chunkedDataTemp = append(chunkedDataTemp, chunkedDataTempPerDebitSourceAccount)
+					if len(chunkedDataTempPerDebitSourceAccount) != 0 {
+						chunkedDataTemp = append(chunkedDataTemp, chunkedDataTempPerDebitSourceAccount)
+					}
 				} else {
 					for key, val := range chunkedDataTemp {
 						if len(val) == maxJob {
@@ -71,8 +77,11 @@ func chunkList(ungroupedAccountList []account) (chunkedDataWrapper [][][]account
 		if lastLoop {
 			// fmt.Printf("length : %d\n", len(val))
 			// fmt.Println("chunkedDataTemp")
-			// fmt.Println(chunkedDataTemp)
-			chunkedDataWrapper = append(chunkedDataWrapper, chunkedDataTemp...)
+			// chunkedDataTempWrapperByte, _ := json.Marshal(chunkedDataTemp)
+			// fmt.Println(string(chunkedDataTempWrapperByte))
+			for _, val := range chunkedDataTemp {
+				chunkedDataWrapper = append(chunkedDataWrapper, val)
+			}
 			break
 		}
 

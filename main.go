@@ -23,8 +23,8 @@ type (
 )
 
 const (
-	numberOfAccount            = 1000000
-	numberOfDebitSourceAccount = 100000
+	numberOfAccount            = 100
+	numberOfDebitSourceAccount = 10
 	maxJob                     = 10
 )
 
@@ -65,8 +65,8 @@ func main() {
 
 	// fmt.Println("chunkedData==========")
 	json.Marshal(chunkedData)
-	// chunkedDataWrapperByte, _ := json.Marshal(chunkedData)
-	// fmt.Println(string(chunkedDataWrapperByte))
+	chunkedDataWrapperByte, _ := json.Marshal(chunkedData)
+	fmt.Println(string(chunkedDataWrapperByte))
 	timeElapsed := endCountProcessTime(start)
 	printProcessTime(timeElapsed, numberOfAccount)
 }

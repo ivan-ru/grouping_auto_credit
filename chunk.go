@@ -5,17 +5,17 @@ import (
 )
 
 var (
-	chunkedDataTempPerDebitSourceAccount       = [][]account{}
+	chunkedDataTempPerDebitSourceAccount       = [][]autoCreditHistory{}
 	chunkedDataTempPerDebitSourceAccountLength = 0
-	chunkedDataTemp                            = [][][]account{}
-	chunkedDataWrapper                         = [][][]account{}
+	chunkedDataTemp                            = [][][]autoCreditHistory{}
+	chunkedDataWrapper                         = [][][]autoCreditHistory{}
 	loopCount                                  int
 	lastLoop                                   bool
 )
 
 // chunkList ...
-func chunkList(ungroupedAccountList []account) (chunkedDataWrapper [][][]account, dataToStore []accountGroup) {
-	accountListGrouped := make(map[string][]account)
+func chunkList(ungroupedAccountList []autoCreditHistory) (chunkedDataWrapper [][][]autoCreditHistory, dataToStore []accountGroup) {
+	accountListGrouped := make(map[string][]autoCreditHistory)
 	for _, val := range ungroupedAccountList {
 		accountListGrouped[val.DebitSourceAccount] = append(accountListGrouped[val.DebitSourceAccount], val)
 	}
@@ -38,7 +38,7 @@ func chunkList(ungroupedAccountList []account) (chunkedDataWrapper [][][]account
 				if len(val)+len(chunkedDataTempPerDebitSourceAccount) < maxJob {
 					chunkedDataTempPerDebitSourceAccount = append(chunkedDataTempPerDebitSourceAccount, val)
 				} else {
-					chunkedDataTemp = append(chunkedDataTemp, [][]account{val})
+					chunkedDataTemp = append(chunkedDataTemp, [][]autoCreditHistory{val})
 				}
 			}
 			if chunkedDataTempPerDebitSourceAccountLength == maxJob {
@@ -61,7 +61,7 @@ func chunkList(ungroupedAccountList []account) (chunkedDataWrapper [][][]account
 							chunkedDataTemp[key] = append(chunkedDataTemp[key], chunkedDataTempPerDebitSourceAccount...)
 							// fmt.Println("chunkedDataTemp[key]")
 							// fmt.Println(chunkedDataTemp[key])
-							var accountGroupPerDebitSourceTemp [][]account
+							var accountGroupPerDebitSourceTemp [][]autoCreditHistory
 							accountGroupPerDebitSourceTemp = chunkedDataTemp[key]
 							chunkedDataWrapper = append(chunkedDataWrapper, accountGroupPerDebitSourceTemp)
 							// chunkedDataWrapper = append(chunkedDataWrapper, chunkedDataTemp[key])

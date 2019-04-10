@@ -9,16 +9,23 @@ import (
 )
 
 type (
-	account struct {
-		AccountNumber      string `json:"account_number"`
-		DebitSourceAccount string `json:"debit_source_account"`
-		AccountOpeningDate string `json:"account_opening_date"`
-	}
-
 	accountGroup struct {
-		DebitSourceAccount string    `json:"debit_source_account"`
-		AutoCreditDate     time.Time `json:"auto_credit_date"`
-		Account            []account `json:"account"`
+		DebitSourceAccount string              `json:"debit_source_account"`
+		AutoCreditDate     time.Time           `json:"auto_credit_date"`
+		Account            []autoCreditHistory `json:"account"`
+	}
+	autoCreditHistory struct {
+		AccountNumber      string    `json:"account_number" orm:"column(account_number);pk"`
+		AutoCreditDate     time.Time `json:"auto_credit_date" orm:"column(auto_credit_date)"`
+		DebitSourceAccount string    `json:"debit_source_account" orm:"column(debit_source_account)"`
+		TargetAmount       float64   `json:"target_amount" orm:"column(target_amount)"`
+		TransactionAmount  float64   `json:"transaction_amount" orm:"column(transaction_amount)"`
+		TransactionStatus  string    `json:"transaction_status" orm:"column(transaction_status)"`
+		AvailableBalance   float64   `json:"available_balance" orm:"column(available_balance)"`
+		EndingBalance      float64   `json:"ending_balance" orm:"column(ending_balance)"`
+		NextAutoCreditDate time.Time `json:"next_auto_credit_date" orm:"column(next_auto_credit_date)"`
+		AutoCreditOption   string    `json:"auto_credit_option" orm:"column(auto_credit_option)"`
+		AccountOpeningDate string    `json:"account_opening_date" orm:"column(account_opening_date)"`
 	}
 )
 
@@ -80,12 +87,20 @@ func main() {
 // AND account_status=1
 // and auto credit date = 'hari ini'
 // order by account_opening_date asc
-func getData(numberOfAccountData int, numberOfDebitSourceAccount int) (accountList []account) {
+func getData(numberOfAccountData int, numberOfDebitSourceAccount int) (accountList []autoCreditHistory) {
 	start := startCountProcessTime()
 	for i := 0; i < numberOfAccountData; i++ {
-		newAccount := account{
+		newAccount := autoCreditHistory{
 			AccountNumber:      strconv.Itoa(i + 1),
 			AccountOpeningDate: time.Now().Local().Add(time.Second * time.Duration(i)).Format("2006-01-02 15:04:05"),
+			AutoCreditDate:     time.Now().Local().Add(time.Second * time.Duration(i)),
+			TargetAmount:       0,
+			TransactionAmount:  0,
+			TransactionStatus:  "S",
+			AvailableBalance:   1000,
+			EndingBalance:      0,
+			NextAutoCreditDate: time.Now().Local().Add(time.Second * time.Duration(i)),
+			AutoCreditOption:   "daily",
 		}
 		newAccount.DebitSourceAccount = strconv.Itoa(randInt(1, numberOfDebitSourceAccount))
 		// fmt.Print(" = ")
